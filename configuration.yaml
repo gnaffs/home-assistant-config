@@ -1,0 +1,320 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  # Location required to calculate the time the sun rises and sets
+  latitude: !secret latitude 
+  longitude: !secret longitude 
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: 318
+  # metric for Metric, imperial for Imperial
+  unit_system: imperial
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: America/New_York
+
+  auth_providers:
+    - type: homeassistant
+
+# Packages
+  packages:
+    security: !include security.yaml
+
+  whitelist_external_dirs:
+    - /config/tensorflow/snapshot
+    - /config/www/camera
+
+#lovelace:
+#  mode: yaml
+
+# Enables the frontend
+frontend:
+
+logger:
+  default: info
+  logs:
+    homeassistant.components.alarm_control_panel: debug
+    homeassistant.components.alarmdecoder: debug
+    homeassistant.components.sensor.alarm_panel_display: debug
+    alarmdecoder: debug
+    # homeassistant.components.websocket_api: debug
+    # homeassistant.core: debug
+
+# Enables configuration UI
+config:
+
+http:
+  # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+  base_url: !secret base_url
+
+# Checks for available updates
+# Note: This component will send some information about your system to
+# the developers to assist with development of Home Assistant.
+# For more information, please see:
+# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
+updater:
+  # Optional, allows Home Assistant developers to focus on popular components.
+  # include_used_components: true
+
+# Discover some devices automatically
+discovery:
+  ignore:
+    - plex_mediaserver
+
+system_health:
+
+cloud:
+
+person:
+
+# Enables support for tracking state changes over time
+history:
+
+# persist states between restarts
+recorder:
+ db_url: !secret db_url
+#  exclude:
+#    domains:
+#      - device_tracker
+
+# prometheus:
+#   namespace: hass
+#   component_config_glob:
+#     sensor.*_hum:
+#       override_metric: humidity_percent
+#     sensor.*temp:
+#       override_metric: temperature_c
+#     sensor.temperature*:
+#       override_metric: temperature_c
+#     sensor.*_bat:
+#       override_metric: battery_percent
+
+# View all events in a logbook
+logbook:
+
+# Track the sun
+sun:
+
+ssdp:
+
+zeroconf:
+
+map:
+
+mobile_app:
+
+ios:
+  push:
+    categories:
+      - name: Alarm
+        identifier: 'alarm'
+        actions:
+          - identifier: 'DISARM_ALARM'
+            title: 'Disarm Alarm'
+            activationMode: 'background'
+            authenticationRequired: true
+            destructive: true
+      - name: garage
+        identifier: 'garage'
+        actions:
+          - identifier: 'CLOSE_GARAGE'
+            title: 'Close Jeffs garage door'
+            activationMode: 'background'
+            authenticationRequired: true
+          - identifier: 'OPEN_GARAGE'
+            title: 'Open Jeffs garage door'
+            activationMode: 'background'
+            authenticationRequired: true
+      - name: garage2
+        identifier: 'garage2'
+        actions:
+          - identifier: 'CLOSE_GARAGE2'
+            title: 'Close Jens garage door'
+            activationMode: 'background'
+            authenticationRequired: true
+      - name: garage_open
+        identifier: 'garage_open'
+        actions:
+          - identifier: 'OPEN_GARAGE'
+            title: 'Open Jeffs garage door'
+            activationMode: 'background'
+            authenticationRequired: true
+      - name: garage2_open
+        identifier: 'garage2_open'
+        actions:
+          - identifier: 'OPEN_GARAGE2'
+            title: 'Open Jens garage door'
+            activationMode: 'background'
+            authenticationRequired: true
+
+script: !include_dir_merge_named scripts
+# python_script:
+sensor: !include config/sensors.yaml
+automation: !include_dir_merge_list automation
+shell_command: !include shell/shell.yaml
+zone: !include config/zones.yaml
+camera: !include_dir_merge_list cameras
+image_processing: !include_dir_merge_list tensorflow
+
+input_select:
+  set_biprofile:
+    name: "Set BI Profile"
+    initial: "-"
+    options:
+      - "-"
+      - "home"
+      - "away"
+
+cover:
+  platform: opengarage
+  covers:
+      garage:
+        host:  !secret og-host_og-jeff
+        device_key: !secret og-key
+        name:  Jeff Garage Door
+      garage2:
+        host:  !secret og-host_og-jen
+        device_key: !secret og-key
+        name:  Jen Garage Door
+
+input_boolean:
+  previous_garage_open:
+    name: Track if the garage was previously open
+    initial: on
+  previous_garage2_open:
+    name: Track if the garage2 was previously open
+    initial: on
+  previous_garage_closed:
+    name: Track if the garage was previously closed
+    initial: on
+  previous_garage2_closed:
+    name: Track if the garage2 was previously closed
+    initial: on
+  jeff_occupancy:
+    name: Jeff is home (bluetooth)
+  jen_occupancy:
+    name: Jen is home (bluetooth)
+  auto_run_basement_fan:
+    name: Auto-run basement fan at noon, daily
+    initial: on
+  camera_front_notify:
+    name: Front camera notifications
+    initial: on
+  camera_driveway_notify:
+    name: Driveway camera notifications
+    initial: on
+  camera_porch_notify:
+    name: Porch camera notifications
+    initial: on
+  camera_pool_notify:
+    name: Pool camera notifications
+    initial: on
+  camera_basement_notify:
+    name: Basement camera notifications
+    initial: on
+  auto_arm_disarm_alarm_night:
+    name: Arm alarm at midnight and disarm at 5am
+    initial: on
+  auto_close_garage_door_jen:
+    name: Automatically close Jen's Garage Door if open for 30 mins
+  auto_close_garage_door_jeff:
+    name: Automatically close Jeff's Garage Door if open for 30 mins
+  auto_arm_alarm_when_gone:
+    name: Automatically arm alarm when no one is home
+    initial: on
+  auto_disarm_alarm_when_home:
+    name: Automatically disarm alarm when someone comes home
+    initial: on
+  notify_alarm_armed:
+    name: Notification when alarm is armed
+    initial: on
+  notify_alarm_disarmed:
+    name: Notification when alarm is disarmed
+    initial: on
+  notify_alarm_triggered:
+    name: Notification when alarm is triggered
+    initial: on
+
+weather:
+  - platform: darksky
+    api_key: !secret darksky-api_key
+
+binary_sensor:
+  - platform: ring
+  - platform: mqtt
+    name: "Front Camera Motion"
+    state_topic: BlueIris/alert/front
+    payload_on: "ON"
+    payload_off: "OFF"
+    device_class: motion
+  - platform: mqtt
+    name: "Driveway Camera Motion"
+    state_topic: BlueIris/alert/driveway
+    payload_on: "ON"
+    payload_off: "OFF"
+    device_class: motion
+  - platform: mqtt
+    name: "Porch Camera Motion"
+    state_topic: BlueIris/alert/porch
+    payload_on: "ON"
+    payload_off: "OFF"
+    device_class: motion
+  - platform: mqtt
+    name: "Pool Camrea Motion"
+    state_topic: BlueIris/alert/pool
+    payload_on: "ON"
+    payload_off: "OFF"
+    device_class: motion
+  - platform: mqtt
+    name: "Basement Camera Motion"
+    state_topic: BlueIris/alert/basement
+    payload_on: "ON"
+    payload_off: "OFF"
+    device_class: motion
+
+group: !include groups.yaml
+
+notify:
+  - name: slack
+    platform: slack
+    api_key: !secret slack-api_key
+    default_channel: '#home'
+    username: "Home Assistant"
+    icon: home-assistant
+
+nest:
+  client_id: !secret nest-client_id
+  client_secret: !secret nest-client_secret
+
+device_tracker:
+  - platform: mqtt
+    devices:
+      jeff_basement: 'monitor/basement/jeffs_phone/device_tracker'
+      jeff_dining: 'monitor/dining/jeffs_phone/device_tracker'
+      jeff_garage: 'monitor/garage/jeffs_phone/device_tracker'
+      jeff_livingroom: 'monitor/livingroom/jeffs_phone/device_tracker'
+      jeff_upstairs: 'monitor/upstairs/jeffs_phone/device_tracker'
+      jen_basement: 'monitor/basement/jens_phone/device_tracker'
+      jen_dining: 'monitor/dining/jens_phone/device_tracker'
+      jen_garage: 'monitor/garage/jens_phone/device_tracker'
+      jen_livingroom: 'monitor/livingroom/jens_phone/device_tracker'
+      jen_upstairs: 'monitor/upstairs/jens_phone/device_tracker'
+
+
+influxdb:
+  host: !secret influxdb-host
+  port: 8086
+  max_retries: 10
+
+ring:
+  username: !secret ring-username
+  password: !secret ring-password
+
+  #google_assistant:
+  #  project_id: home-assistant-7c48d
+  #  client_id: !secret google_assistant_client_id
+  #  access_token: !secret google_assistant_access_token
+  #  agent_user_id: !secret google_assistant_agent_user_id
+  #  api_key: !secret google_assistant_api_key
+  #  expose_by_default: true
+
+# zwave:
+#  usb_path: /dev/ttyACM0
